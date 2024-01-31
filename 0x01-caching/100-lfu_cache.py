@@ -1,78 +1,63 @@
 #!/usr/bin/python3
 """
-***********
-LFU caching.
+****************************************************
+Create LFUCache class that inherits from BaseCaching
 """
 BaseCaching = __import__('base_caching').BaseCaching
 
 
 class LFUCache(BaseCaching):
     """
-    ``````````````
-    LFUCache class.
+    ---------------
+    Define LFUCache
     """
 
     def __init__(self):
         """
-        ~~~~~~~~~~~
-        Constructor.
+        ...................
+        Initialize LFUCache
         """
-        super().__init__()
         self.queue = []
-        self.count = {}
+        self.lfu = {}
+        super().__init__()
 
     def put(self, key, item):
         """
-        ..........
-        Put method.
+        `````````````````````````````````
+        Assign the item to the dictionary
         """
-        pass
+        if key and item:
+            if (len(self.queue) >= self.MAX_ITEMS and
+                    not self.cache_data.get(key)):
+                delete = self.queue.pop(0)
+                self.lfu.pop(delete)
+                self.cache_data.pop(delete)
+                print('DISCARD: {}'.format(delete))
+
+            if self.cache_data.get(key):
+                self.queue.remove(key)
+                self.lfu[key] += 1
+            else:
+                self.lfu[key] = 0
+
+            insert_index = 0
+            while (insert_index < len(self.queue) and
+                   not self.lfu[self.queue[insert_index]]):
+                insert_index += 1
+            self.queue.insert(insert_index, key)
+            self.cache_data[key] = item
 
     def get(self, key):
         """
-        ----------
-        Get method.
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        Return the value associated with the given key
         """
-        if key in self.cache_data:
-            self.mru = key
-            return self.cache_data[key]
-        return None
-
-
-if __name__ == "__main__":
-    my_cache = LFUCache()
-    my_cache.put("A", "Hello")
-    my_cache.put("B", "World")
-    my_cache.put("C", "Holberton")
-    my_cache.put("D", "School")
-    my_cache.print_cache()
-    print(my_cache.get("B"))
-    my_cache.put("E", "Battery")
-    my_cache.print_cache()
-    my_cache.put("C", "Street")
-    my_cache.print_cache()
-    print(my_cache.get("A"))
-    print(my_cache.get("B"))
-    print(my_cache.get("C"))
-    my_cache.put("F", "Mission")
-    my_cache.print_cache()
-    my_cache.put("G", "San Francisco")
-    my_cache.print_cache()
-    my_cache.put("H", "H")
-    my_cache.print_cache()
-    my_cache.put("I", "I")
-    my_cache.print_cache()
-    print(my_cache.get("I"))
-    print(my_cache.get("H"))
-    print(my_cache.get("I"))
-    print(my_cache.get("H"))
-    print(my_cache.get("I"))
-    print(my_cache.get("H"))
-    my_cache.put("J", "J")
-    my_cache.print_cache()
-    my_cache.put("K", "K")
-    my_cache.print_cache()
-    my_cache.put("L", "L")
-    my_cache.print_cache()
-    my_cache.put("M", "M")
-    my_cache.print_cache()
+        if self.cache_data.get(key):
+            self.lfu[key] += 1
+            if self.queue.index(key) + 1 != len(self.queue):
+                while (self.queue.index(key) + 1 < len(self.queue) and
+                       self.lfu[key] >=
+                       self.lfu[self.queue[self.queue.index(key) + 1]]):
+                    self.queue.insert(self.queue.index(key) + 1,
+                                      self.queue.pop(self.queue.index(key)))
+        return self.cache_data.get(key)
